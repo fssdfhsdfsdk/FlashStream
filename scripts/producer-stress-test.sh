@@ -40,8 +40,8 @@ echo -e "${GREEN}✓ Kafka 服务运行中${NC}"
 echo ""
 
 # 创建测试 Topic（如果不存在）
-echo -e "${YELLOW[2/3] 创建测试 Topic...${NC}"
-docker exec kafka-1 kafka-topics --create \
+echo -e "${YELLOW}[2/3] 创建测试 Topic...${NC}"
+docker exec kafka-1 /opt/kafka/bin/kafka-topics.sh --create \
     --if-not-exists \
     --topic $TOPIC \
     --partitions 6 \
@@ -63,7 +63,7 @@ echo "  压测进行中，请稍候..."
 echo "=========================================="
 echo ""
 
-docker exec kafka-1 kafka-producer-perf-test \
+docker exec kafka-1 /opt/kafka/bin/kafka-producer-perf-test.sh \
     --topic $TOPIC \
     --num-records $NUM_RECORDS \
     --record-size $RECORD_SIZE \
@@ -82,5 +82,4 @@ echo -e "${GREEN}==========================================${NC}"
 echo ""
 echo "查看结果:"
 echo "  - Kafdrop UI: http://localhost:9001"
-echo "  - Kafka Eagle: http://localhost:8048"
 echo ""

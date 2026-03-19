@@ -22,11 +22,10 @@ echo.
 echo   --- 监控工具 ---
 echo   [5] 查看指标 (交互式)
 echo   [6] 打开 Kafdrop UI
-echo   [7] 打开 Kafka Eagle UI
 echo.
 echo   --- 业务验证 ---
-echo   [8] 幂等性验证测试
-echo   [9] Rebalance 测试
+echo   [7] 幂等性验证测试
+echo   [8] Rebalance 测试
 echo.
 echo   [0] 退出
 echo.
@@ -38,9 +37,8 @@ if "%choice%"=="3" goto producer_test
 if "%choice%"=="4" goto consumer_test
 if "%choice%"=="5" goto view_metrics
 if "%choice%"=="6" goto open_kafdrop
-if "%choice%"=="7" goto open_eagle
-if "%choice%"=="8" goto idempotency_test
-if "%choice%"=="9" goto rebalance_test
+if "%choice%"=="7" goto idempotency_test
+if "%choice%"=="8" goto rebalance_test
 if "%choice%"=="0" goto end
 goto menu
 
@@ -51,7 +49,6 @@ echo 服务已启动
 echo.
 echo 可用服务:
 echo   - Kafdrop: http://localhost:9001
-echo   - Kafka Eagle: http://localhost:8048
 echo   - Redis: localhost:6379
 echo   - MySQL: localhost:3306
 pause
@@ -74,7 +71,7 @@ set /p records=请输入消息数 (直接回车使用默认值100000):
 if "!topic!"=="" set topic=order_events
 if "!records!"=="" set records=100000
 
-docker exec kafka-1 kafka-producer-perf-test --topic !topic! --num-records !records! --record-size 1024 --throughput -1 --producer-props bootstrap.servers=localhost:9091 acks=all
+docker exec kafka-1 /opt/kafka/bin/kafka-producer-perf-test.sh --topic !topic! --num-records !records! --record-size 1024 --throughput -1 --producer-props bootstrap.servers=localhost:9091 acks=all
 pause
 goto menu
 
@@ -87,7 +84,7 @@ set /p messages=请输入消息数 (直接回车使用默认值100000):
 if "!topic!"=="" set topic=order_events
 if "!messages!"=="" set messages=100000
 
-docker exec kafka-1 kafka-consumer-perf-test --bootstrap-server localhost:9091 --topic !topic! --messages !messages! --threads 3
+docker exec kafka-1 /opt/kafka/bin/kafka-consumer-perf-test.sh --bootstrap-server localhost:9091 --topic !topic! --messages !messages! --threads 3
 pause
 goto menu
 
@@ -105,23 +102,19 @@ echo [5] 查看所有消费者组详情
 echo.
 set /p m_choice=请输入选项:
 
-if "!m_choice!"=="1" docker exec kafka-1 kafka-topics --list --bootstrap-server localhost:9091
+if "!m_choice!"=="1" docker exec kafka-1 /opt/kafka/bin/kafka-topics.sh --list --bootstrap-server localhost:9091
 if "!m_choice!"=="2" (
     set /p t_name=请输入Topic名称:
-    docker exec kafka-1 kafka-topics --describe --topic !t_name! --bootstrap-server localhost:9091
+    docker exec kafka-1 /opt/kafka/bin/kafka-topics.sh --describe --topic !t_name! --bootstrap-server localhost:9091
 )
-if "!m_choice!"=="3" docker exec kafka-1 kafka-consumer-groups --bootstrap-server localhost:9091 --list
-if "!m_choice!"=="4" docker exec kafka-1 kafka-consumer-groups --bootstrap-server localhost:9091 --group inventory-consumer-group --describe
-if "!m_choice!"=="5" docker exec kafka-1 kafka-consumer-groups --bootstrap-server localhost:9091 --describe --all-groups
+if "!m_choice!"=="3" docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9091 --list
+if "!m_choice!"=="4" docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9091 --group inventory-consumer-group --describe
+if "!m_choice!"=="5" docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9091 --describe --all-groups
 pause
 goto menu
 
 :open_kafdrop
 start http://localhost:9001
-goto menu
-
-:open_eagle
-start http://localhost:8048
 goto menu
 
 :idempotency_test
@@ -130,7 +123,7 @@ echo 幂等性验证测试
 echo.
 echo 发送测试订单...
 for /L %%i in (1,1,5) do (
-    curl -s -X POST http://localhost:8081/api/orders -H "Content-Type: application/json" -d "{\"userId\":\"test_user_%%i\",\"productId\":\"product_456\",\"quantity\":1,\"price\":99}" >nul
+    curl -s -X POST http://localhost:8081/api/orders -H "Content-Type: application/json" -d "{\"userId\":\"test_user_%%i\",\"productId\":\"product_456\",\"quantity\":1,\"price\":99}" >nul 2>&1
     echo 发送第 %%i 条...
 )
 echo.
@@ -149,7 +142,7 @@ echo.
 echo Rebalance 测试
 echo.
 echo 当前消费者组状态:
-docker exec kafka-1 kafka-consumer-groups --bootstrap-server localhost:9091 --group inventory-consumer-group --describe
+docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh --bootstrap-server localhost:9091 --group inventory-consumer-group --describe
 echo.
 echo 要触发Rebalance，请执行:
 echo   docker-compose up -d inventory-service-2

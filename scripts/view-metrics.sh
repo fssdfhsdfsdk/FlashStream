@@ -12,6 +12,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 BROKER="localhost:9091"
+KAFKA_BIN="/opt/kafka/bin"
 
 show_menu() {
     echo -e "${GREEN}==========================================${NC}"
@@ -31,7 +32,6 @@ show_menu() {
     echo -n "请输入选项: "
 }
 
-# 检查 Docker 是否运行
 check_docker() {
     if ! docker ps | grep -q kafka-1; then
         echo -e "${RED}错误: Kafka 容器未运行${NC}"
@@ -39,13 +39,11 @@ check_docker() {
     fi
 }
 
-# 查看 Topic 列表
 show_topics() {
     echo -e "${YELLOW}[查看 Topic 列表]${NC}"
-    docker exec kafka-1 kafka-topics --list --bootstrap-server $BROKER
+    docker exec kafka-1 $KAFKA_BIN/kafka-topics.sh --list --bootstrap-server $BROKER
 }
 
-# 查看 Topic 详情
 show_topic_detail() {
     echo -n "请输入 Topic 名称: "
     read topic
@@ -53,45 +51,41 @@ show_topic_detail() {
         topic="order_events"
     fi
     echo -e "${YELLOW}[查看 Topic: $topic]${NC}"
-    docker exec kafka-1 kafka-topics --describe --topic $topic --bootstrap-server $BROKER
+    docker exec kafka-1 $KAFKA_BIN/kafka-topics.sh --describe --topic $topic --bootstrap-server $BROKER
 }
 
-# 查看所有消费者组
 show_consumer_groups() {
     echo -e "${YELLOW}[查看消费者组]${NC}"
-    docker exec kafka-1 kafka-consumer-groups \
+    docker exec kafka-1 $KAFKA_BIN/kafka-consumer-groups.sh \
         --bootstrap-server $BROKER \
         --list
 }
 
-# 查看指定消费者组详情
 show_consumer_group_detail() {
     echo -n "请输入消费者组名称 (直接回车查看所有): "
     read group
     
     if [ -z "$group" ]; then
         echo -e "${YELLOW}[查看所有消费者组详情]${NC}"
-        docker exec kafka-1 kafka-consumer-groups \
+        docker exec kafka-1 $KAFKA_BIN/kafka-consumer-groups.sh \
             --bootstrap-server $BROKER \
             --describe \
             --all-groups
     else
         echo -e "${YELLOW}[查看消费者组: $group]${NC}"
-        docker exec kafka-1 kafka-consumer-groups \
+        docker exec kafka-1 $KAFKA_BIN/kafka-consumer-groups.sh \
             --bootstrap-server $BROKER \
             --group $group \
             --describe
     fi
 }
 
-# 查看 Broker 状态
 show_broker_status() {
     echo -e "${YELLOW}[查看 Broker 状态]${NC}"
-    docker exec kafka-1 kafka-broker-api-versions \
+    docker exec kafka-1 $KAFKA_BIN/kafka-broker-api-versions.sh \
         --bootstrap-server $BROKER
 }
 
-# 实时监控 LAG
 watch_lag() {
     echo -n "请输入消费者组名称: "
     read group
@@ -100,10 +94,9 @@ watch_lag() {
     fi
     
     echo -e "${YELLOW}[实时监控 LAG (每5秒刷新), 按 Ctrl+C 退出]${NC}"
-    watch -n 5 "docker exec kafka-1 kafka-consumer-groups --bootstrap-server $BROKER --group $group --describe"
+    watch -n 5 "docker exec kafka-1 $KAFKA_BIN/kafka-consumer-groups.sh --bootstrap-server $BROKER --group $group --describe"
 }
 
-# 查看服务端口
 show_ports() {
     echo -e "${YELLOW}[服务端口映射]${NC}"
     echo ""
@@ -114,7 +107,6 @@ show_ports() {
     echo "│ Kafka Broker 2     │ 9092     │ 主端口                      │"
     echo "│ Kafka Broker 3     │ 9093     │ 主端口                      │"
     echo "│ Kafdrop UI         │ 9001     │ Web 可视化                   │"
-    echo "│ Kafka Eagle        │ 8048     │ 专业监控                    │"
     echo "│ Redis              │ 6379     │ 缓存/幂等                   │"
     echo "│ MySQL              │ 3306     │ 数据库                      │"
     echo "│ Order Service      │ 8081     │ 订单服务                    │"
@@ -123,7 +115,6 @@ show_ports() {
     echo "└─────────────────────┴──────────┴──────────────────────────────┘"
 }
 
-# 主循环
 while true; do
     show_menu
     read choice

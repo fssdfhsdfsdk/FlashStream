@@ -37,7 +37,7 @@ fi
 echo -e "${GREEN}✓ Kafka 服务运行中${NC}"
 echo ""
 
-# 重置消费者组 Offset（从最新消息开始）
+# 开始消费测试
 echo -e "${YELLOW}[2/2] 开始消费测试...${NC}"
 echo ""
 echo "=========================================="
@@ -45,12 +45,11 @@ echo "  消费测试进行中，请稍候..."
 echo "=========================================="
 echo ""
 
-docker exec kafka-1 kafka-consumer-perf-test \
+docker exec kafka-1 /opt/kafka/bin/kafka-consumer-perf-test.sh \
     --bootstrap-server $BROKER \
     --topic $TOPIC \
     --messages $MESSAGES \
-    --threads 3 \
-    --consumer.config /opt/kafka/config/consumer.properties
+    --threads 3
 
 echo ""
 echo -e "${GREEN}==========================================${NC}"
@@ -60,7 +59,7 @@ echo ""
 
 # 查看消费者组状态
 echo "查看消费者组状态:"
-docker exec kafka-1 kafka-consumer-groups \
+docker exec kafka-1 /opt/kafka/bin/kafka-consumer-groups.sh \
     --bootstrap-server $BROKER \
     --group $GROUP \
     --describe
