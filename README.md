@@ -86,10 +86,10 @@ mvn clean package -DskipTests
 java -jar order-service/target/order-service-1.0.0.jar
 
 # 终端2: 库存服务 (端口 8082)
-java -jar inventory-service/target/inventory-service.jar
+java -jar inventory-service/target/inventory-service-1.0.0.jar
 
 # 终端3: 通知服务 (端口 8083)
-java -jar notification-service/target/notification-service.jar
+java -jar notification-service/target/notification-service-1.0.0.jar
 ```
 
 ### 4. 测试接口

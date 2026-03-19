@@ -3,70 +3,62 @@ services:
   kafka-1:
     image: apache/kafka:3.7.0
     container_name: kafka-1
-    hostname: kafka-1
     ports:
       - "9091:9091"
     environment:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9091,CONTROLLER://0.0.0.0:9092
+      # 外部连 9091，内部 Controller 连 19091
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9091,CONTROLLER://0.0.0.0:19091
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9091
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9092,2@kafka-2:9092,3@kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:19091,2@kafka-2:19091,3@kafka-3:19091
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # 必须设置 CLUSTER_ID (或运行格式化命令)，3.x KRaft 模式建议手动指定
+      KAFKA_CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk" 
       KAFKA_LOG_DIRS: /opt/kafka/logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_NUM_PARTITIONS: 6
-    volumes:
-      - kafka-1-data:/opt/kafka/data
     networks:
       - kafka-network
 
-  # Kafka Broker 2
   kafka-2:
     image: apache/kafka:3.7.0
     container_name: kafka-2
-    hostname: kafka-2
     ports:
       - "9092:9092"
     environment:
       KAFKA_NODE_ID: 2
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9091,CONTROLLER://0.0.0.0:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:19091
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9092,2@kafka-2:9092,3@kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:19091,2@kafka-2:19091,3@kafka-3:19091
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
       KAFKA_LOG_DIRS: /opt/kafka/logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_NUM_PARTITIONS: 6
-    volumes:
-      - kafka-2-data:/opt/kafka/data
     networks:
       - kafka-network
 
-  # Kafka Broker 3
   kafka-3:
     image: apache/kafka:3.7.0
     container_name: kafka-3
-    hostname: kafka-3
     ports:
       - "9093:9093"
     environment:
       KAFKA_NODE_ID: 3
       KAFKA_PROCESS_ROLES: broker,controller
-      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9091,CONTROLLER://0.0.0.0:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9093,CONTROLLER://0.0.0.0:19091
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9093
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:9092,2@kafka-2:9092,3@kafka-3:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-1:19091,2@kafka-2:19091,3@kafka-3:19091
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
       KAFKA_LOG_DIRS: /opt/kafka/logs
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_NUM_PARTITIONS: 6
-    volumes:
-      - kafka-3-data:/opt/kafka/data
     networks:
       - kafka-network
+
 
   # Kafdrop - Kafka Web UI
   kafdrop:
